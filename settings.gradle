@@ -1,0 +1,2 @@
+rootProject.name = "karaokedemo"
+include ':app'
