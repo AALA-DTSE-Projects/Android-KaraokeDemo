@@ -32,7 +32,7 @@ class AudioService : Service() {
         audio = AudioTrack(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setContentType(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                 .build(),
             AudioFormat.Builder()
                 .setSampleRate(AUDIO_SAMPLE_RATE)
