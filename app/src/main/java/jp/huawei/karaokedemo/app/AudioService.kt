@@ -31,7 +31,7 @@ class AudioService : Service() {
     private fun initAudioPlayer() {
         audio = AudioTrack(
             AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                 .setContentType(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                 .build(),
             AudioFormat.Builder()
