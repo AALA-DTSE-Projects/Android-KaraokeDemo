@@ -4,6 +4,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {url "http://artifactory.cde.huawei.com/artifactory/maven-public"}
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.2.0"
