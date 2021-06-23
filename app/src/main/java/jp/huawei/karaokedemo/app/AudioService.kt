@@ -16,7 +16,7 @@ class AudioService : Service() {
     private lateinit var audio: AudioTrack
     private val bufferSize = AudioTrack.getMinBufferSize(
         AUDIO_SAMPLE_RATE,
-        AudioFormat.CHANNEL_OUT_MONO,
+        AudioFormat.CHANNEL_OUT_STEREO,
         AudioFormat.ENCODING_PCM_16BIT
     )
 
@@ -31,13 +31,13 @@ class AudioService : Service() {
     private fun initAudioPlayer() {
         audio = AudioTrack(
             AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                .setContentType(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.USAGE_MEDIA)
                 .build(),
             AudioFormat.Builder()
                 .setSampleRate(AUDIO_SAMPLE_RATE)
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build(),
+                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO).build(),
             bufferSize,
             AudioTrack.MODE_STREAM,
             AudioManager.AUDIO_SESSION_ID_GENERATE
