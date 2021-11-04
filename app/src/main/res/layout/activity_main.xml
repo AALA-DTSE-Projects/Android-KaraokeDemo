@@ -15,7 +15,7 @@
         tools:context=".app.MainActivity">
 
         <TextView
-            android:id="@+id/lyrics"
+            android:id="@+id/device_id"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:ellipsize="marquee"
