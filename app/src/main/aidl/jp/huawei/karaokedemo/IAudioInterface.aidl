@@ -2,7 +2,7 @@ package jp.huawei.karaokedemo;
 
 
 interface IAudioInterface {
-    void setLyrics(String lyrics);
+    void connect(String deviceId);
     void startPlay();
     void playAudio(inout byte[] buffer);
     void stopPlay();

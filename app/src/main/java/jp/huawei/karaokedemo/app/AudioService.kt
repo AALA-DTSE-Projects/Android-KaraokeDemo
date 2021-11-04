@@ -8,7 +8,7 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.IBinder
 import jp.huawei.karaokedemo.IAudioInterface
-import jp.huawei.karaokedemo.app.model.LyricsEvent
+import jp.huawei.karaokedemo.app.model.SetDeviceIdEvent
 import jp.huawei.karaokedemo.app.model.TerminateEvent
 import org.greenrobot.eventbus.EventBus
 
@@ -46,8 +46,8 @@ class AudioService : Service() {
     }
 
     private val binder = object : IAudioInterface.Stub() {
-        override fun setLyrics(lyrics: String) {
-            EventBus.getDefault().post(LyricsEvent(lyrics))
+        override fun connect(deviceId: String) {
+            EventBus.getDefault().post(SetDeviceIdEvent(deviceId))
         }
 
         override fun startPlay() {

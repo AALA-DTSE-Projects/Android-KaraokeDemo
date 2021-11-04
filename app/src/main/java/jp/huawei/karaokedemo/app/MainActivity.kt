@@ -1,18 +1,26 @@
 package jp.huawei.karaokedemo.app
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.IBinder
 import android.os.Process
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import com.huawei.ohos.localability.AbilityUtils
 import jp.huawei.karaokedemo.R
-import jp.huawei.karaokedemo.app.model.LyricsEvent
+import jp.huawei.karaokedemo.app.model.SetDeviceIdEvent
 import jp.huawei.karaokedemo.app.model.TerminateEvent
+import jp.huawei.karaokedemo.app.remote.ResultServiceProxy
 import jp.huawei.karaokedemo.databinding.ActivityMainBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -21,9 +29,15 @@ import org.greenrobot.eventbus.ThreadMode
 class MainActivity : AppCompatActivity() {
     companion object {
         const val DISTRIBUTED_PERMISSION_CODE = 0
+        const val HARMONY_BUNDLE_NAME = "com.huawei.karaokedemo"
+        const val HARMONY_ABILITY_NAME = "com.huawei.karaokedemo.ResultServiceAbility"
     }
 
     private lateinit var binding: ActivityMainBinding
+    private var serviceConnection: ServiceConnection? = null
+    private var resultServiceProxy: ResultServiceProxy? = null
+    private val deviceIds = mutableListOf<String>()
+    private val TAG = MainActivity::class.java.name
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,14 +55,33 @@ class MainActivity : AppCompatActivity() {
         EventBus.getDefault().unregister(this)
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onLyricsUpdate(event: LyricsEvent) {
-        binding.lyrics.text = event.lyrics
+    override fun onDestroy() {
+        super.onDestroy()
+        resultServiceProxy?.let {
+            deviceIds.forEach { deviceId ->
+                Log.d(TAG, "Disconnect with $deviceId")
+                it.disconnect(deviceId)
+            }
+        }
+        serviceConnection?.let {
+            AbilityUtils.disconnectAbility(this, it)
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onTerminateEvent(event: TerminateEvent) {
         finish()
+    }
+
+    @SuppressLint("SetTextI18n")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onSetDeviceIdEvent(event: SetDeviceIdEvent) {
+        val deviceId = event.deviceId
+        deviceIds.add(deviceId)
+        binding.deviceId.text = "Connected from device: $deviceId"
+        connectToHarmonyService {
+            it.connect(deviceId)
+        }
     }
 
     private fun setupBinding() {
@@ -125,5 +158,25 @@ class MainActivity : AppCompatActivity() {
         }
         val pm: PackageManager = context.packageManager ?: return false
         return pm.checkSignatures(uid, Process.SYSTEM_UID) == PackageManager.SIGNATURE_MATCH
+    }
+
+    private fun connectToHarmonyService(callback: (ResultServiceProxy) -> Unit)  {
+        val intent = Intent()
+        val componentName = ComponentName(HARMONY_BUNDLE_NAME, HARMONY_ABILITY_NAME)
+        intent.component = componentName
+        val connection = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                Log.d(TAG, "Connected to $HARMONY_ABILITY_NAME")
+                resultServiceProxy = ResultServiceProxy(service)
+                serviceConnection = this
+                callback.invoke(resultServiceProxy ?: return)
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                resultServiceProxy = null
+                serviceConnection = null
+            }
+        }
+        AbilityUtils.connectAbility(this, intent, connection)
     }
 }
