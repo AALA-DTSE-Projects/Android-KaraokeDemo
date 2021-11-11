@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -30,7 +29,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val DISTRIBUTED_PERMISSION_CODE = 0
         const val HARMONY_BUNDLE_NAME = "com.huawei.karaokedemo"
-        const val HARMONY_ABILITY_NAME = "com.huawei.karaokedemo.ResultServiceAbility"
+        const val HARMONY_ABILITY_NAME = "com.huawei.karaokedemo.MainAbility"
+        const val HARMONY_SERVICE_ABILITY_NAME = "com.huawei.karaokedemo.ResultServiceAbility"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -91,6 +91,7 @@ class MainActivity : AppCompatActivity() {
     private fun init() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestDistributedPermission()
+            AbilityUtils.startAbility(this, Intent().setComponent(ComponentName(HARMONY_BUNDLE_NAME, HARMONY_ABILITY_NAME)))
         }
     }
 
@@ -106,25 +107,22 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             else -> {
-                "permission $requestedPermission is already granted!"
+                return
             }
         }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        showMessage(message, false) {}
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun showPermissionRequest(permission: String) {
         if (shouldShowRequestPermissionRationale(permission)) {
-            AlertDialog.Builder(this)
-                .setMessage("We need the permission to exchange data across device")
-                .setCancelable(true)
-                .setPositiveButton("OK") { _,_ ->
-                    requestPermissions(
-                        arrayOf(
-                            permission
-                        ), DISTRIBUTED_PERMISSION_CODE
-                    )
-                }.show()
+            showMessage("We need the permission to exchange data across device", true) {
+                requestPermissions(
+                    arrayOf(
+                        permission
+                    ), DISTRIBUTED_PERMISSION_CODE
+                )
+            }
         } else {
             requestPermissions(arrayOf(permission), DISTRIBUTED_PERMISSION_CODE)
         }
@@ -162,11 +160,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun connectToHarmonyService(callback: (ResultServiceProxy) -> Unit)  {
         val intent = Intent()
-        val componentName = ComponentName(HARMONY_BUNDLE_NAME, HARMONY_ABILITY_NAME)
+        val componentName = ComponentName(HARMONY_BUNDLE_NAME, HARMONY_SERVICE_ABILITY_NAME)
         intent.component = componentName
         val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                Log.d(TAG, "Connected to $HARMONY_ABILITY_NAME")
+                Log.d(TAG, "Connected to $HARMONY_SERVICE_ABILITY_NAME")
                 resultServiceProxy = ResultServiceProxy(service)
                 serviceConnection = this
                 callback.invoke(resultServiceProxy ?: return)
@@ -178,5 +176,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
         AbilityUtils.connectAbility(this, intent, connection)
+    }
+
+    private fun showMessage(message: String, cancelable: Boolean, callBack: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setMessage(message)
+            .setCancelable(cancelable)
+            .setPositiveButton("OK") { _,_ ->
+                callBack.invoke()
+            }.show()
     }
 }
