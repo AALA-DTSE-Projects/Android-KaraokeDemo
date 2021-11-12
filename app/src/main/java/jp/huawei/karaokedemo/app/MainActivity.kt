@@ -82,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         connectToHarmonyService {
             it.connect(deviceId)
         }
+        showMessage("Connected from mobile app. \n You can try singing on the mobile mic", true) {}
     }
 
     private fun setupBinding() {
@@ -91,7 +92,14 @@ class MainActivity : AppCompatActivity() {
     private fun init() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestDistributedPermission()
-            AbilityUtils.startAbility(this, Intent().setComponent(ComponentName(HARMONY_BUNDLE_NAME, HARMONY_ABILITY_NAME)))
+            try {
+                AbilityUtils.startAbility(
+                    this,
+                    Intent().setComponent(ComponentName(HARMONY_BUNDLE_NAME, HARMONY_ABILITY_NAME))
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -110,13 +118,13 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
-        showMessage(message, false) {}
+        showMessage(message, true) {}
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun showPermissionRequest(permission: String) {
         if (shouldShowRequestPermissionRationale(permission)) {
-            showMessage("We need the permission to exchange data across device", true) {
+            showMessage("We need the permission to exchange data across device", false) {
                 requestPermissions(
                     arrayOf(
                         permission
